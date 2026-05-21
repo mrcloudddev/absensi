@@ -68,7 +68,15 @@ function nyalakanScanner() {
     if (!html5QrScannerSiswa) {
         html5QrScannerSiswa = new Html5QrcodeScanner(
             "reader-siswa", 
-            { fps: 15, qrbox: (w, h) => ({ width: w * 0.7, height: w * 0.7 }), aspectRatio: 1.0 }, 
+            { 
+                fps: 15, 
+                qrbox: (w, h) => ({ width: w * 0.7, height: w * 0.7 }), 
+                aspectRatio: 1.0,
+                // MEMAKSA MENGGUNAKAN KAMERA BELAKANG HP:
+                videoConstraints: {
+                    facingMode: "environment"
+                }
+            }, 
             false
         );
         html5QrScannerSiswa.render((text) => {
