@@ -4,37 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Absensi Mandiri Siswa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="bg-decoration">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
     <div class="container">
-        <h2>Absensi Mandiri Siswa</h2>
-        <p class="info-p">Silakan masukkan NIS atau scan QR mading kelas Anda.</p>
+        <div class="header-zone">
+            <div class="logo-area">
+                <i class="fa-solid fa-camera-retro"></i> </div>
+            <h2>E-Presensi Siswa</h2>
+            <p>Pindai QR mading kelas atau masukkan NIS Anda di bawah ini</p>
+        </div>
         
         <form id="formAbsen">
-            <label for="nisInput">Masukkan NIS Anda:</label>
-            <div class="search-box">
-                <input type="text" id="nisInput" required placeholder="Contoh: 212201">
-                <button type="button" id="btnCari">Cek Data</button>
+            <div class="input-group">
+                <label for="nisInput"><i class="fa-solid fa-id-card"></i> Nomor Induk Siswa (NIS)</label>
+                <div class="search-box">
+                    <input type="text" id="nisInput" required placeholder="Masukkan NIS Anda...">
+                    <button type="button" id="btnCari">
+                        <span id="btnText"><i class="fa-solid fa-magnifying-glass"></i> Cari</span>
+                    </button>
+                </div>
             </div>
             
-            <div id="detailSiswa" class="hidden">
+            <div id="detailSiswa" class="hidden animated-fade-in">
                 <div class="card-siswa">
-                    <p><strong>Nama:</strong> <span id="txtNama">-</span></p>
-                    <p><strong>Kelas:</strong> <span id="txtKelas">-</span></p>
+                    <div class="avatar-fallback">
+                        <i class="fa-solid fa-user-gradient"></i>
+                    </div>
+                    <div class="bio-siswa">
+                        <h4 id="txtNama">Nama Siswa</h4>
+                        <p id="txtKelas">Kelas Siswa</p>
+                    </div>
                 </div>
                 
-                <label for="statusAbsen">Status Kehadiran:</label>
-                <select id="statusAbsen">
-                    <option value="Hadir">Hadir</option>
-                    <option value="Izin">Izin</option>
-                    <option value="Sakit">Sakit</option>
-                </select>
+                <div class="input-group">
+                    <label for="statusAbsen"><i class="fa-solid fa-user-check"></i> Status Kehadiran</label>
+                    <select id="statusAbsen">
+                        <option value="Hadir">🟢 Hadir</option>
+                        <option value="Izin">🟡 Izin</option>
+                        <option value="Sakit">🔵 Sakit</option>
+                    </select>
+                </div>
                 
-                <label for="keterangan">Keterangan / Alasan (Opsional):</label>
-                <input type="text" id="keterangan" placeholder="Isi jika izin atau sakit">
+                <div class="input-group">
+                    <label for="keterangan"><i class="fa-solid fa-file-pen"></i> Keterangan (Opsional)</label>
+                    <input type="text" id="keterangan" placeholder="Alasan jika izin atau sakit...">
+                </div>
                 
-                <button type="submit" id="btnSubmit" class="btn-success">Kirim Kehadiran</button>
+                <button type="submit" id="btnSubmit" class="btn-success">
+                    <i class="fa-solid fa-paper-plane"></i> Kirim Presensi Masuk
+                </button>
             </div>
         </form>
     </div>
