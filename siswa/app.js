@@ -1,17 +1,15 @@
-// GANTI DENGAN URL DEPLOY GOOGLE APPS SCRIPT ANDA
-const API_URL = "https://script.google.com/macros/s/AKfycbx1qP2sxfhksk6lKzAc_jNnRbw22re2fvLl2qqSfKYWYcrPGd8NBTX2vmuQjx0yg3IM/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzQ1-YvNByd9a0AJ_bCjNq2EZbiGQyWI7zdx8iuhN2c85VilvMFjCytgg3CpjYC9EL7/exec"; // Ganti dengan URL Web App Anda
 
 let dataSiswaGlobal = [];
 let siswaTerpilih = null;
+let html5QrScannerSiswa = null;
 
 window.onload = async () => {
     try {
-        // 1. Ambil data master siswa dari Google Sheets API
         const res = await fetch(`${API_URL}?target=data_siswa`);
         dataSiswaGlobal = await res.json();
 
-        // 2. Cek Parameter URL (Skenario Scan QR Mading Kelas)
-        // Format link QR: https://username.github.io/repo/siswa/?nis=212201
+        // Cek jika ada parameter otomatis via QR Mading (.../siswa/?nis=212201)
         const urlParams = new URLSearchParams(window.location.search);
         const nisDariQR = urlParams.get('nis');
 
@@ -20,10 +18,11 @@ window.onload = async () => {
             prosesCariSiswa(nisDariQR);
         }
     } catch (err) {
-        alert("Gagal memuat data siswa. Pastikan URL API Web App sudah benar.");
+        alert("Gagal memuat basis data siswa.");
     }
 };
 
+// Fungsi pencarian siswa berdasarkan NIS
 function prosesCariSiswa(nis) {
     siswaTerpilih = dataSiswaGlobal.find(s => s.nis.trim() === nis.trim());
     
@@ -31,24 +30,82 @@ function prosesCariSiswa(nis) {
         document.getElementById('txtNama').innerText = siswaTerpilih.nama;
         document.getElementById('txtKelas').innerText = siswaTerpilih.kelas;
         document.getElementById('detailSiswa').classList.remove('hidden');
+        
+        // Jika scanner sedang jalan, matikan setelah berhasil mendeteksi
+        matikanScanner();
     } else {
-        alert("NIS Siswa tidak ditemukan dalam sistem database!");
+        alert("NIS Siswa tidak dikenali di sistem!");
         document.getElementById('detailSiswa').classList.add('hidden');
     }
 }
 
+// Handler Tombol Cari Manual
 document.getElementById('btnCari').addEventListener('click', () => {
     const nis = document.getElementById('nisInput').value;
     prosesCariSiswa(nis);
 });
 
+// LOGIKA SAKELAR METODE (KETIK VS SCAN)
+const btnModeKetik = document.getElementById('btnModeKetik');
+const btnModeScan = document.getElementById('btnModeScan');
+const zoneKetik = document.getElementById('zoneKetik');
+const zoneScan = document.getElementById('zoneScan');
+
+btnModeKetik.addEventListener('click', () => {
+    btnModeKetik.classList.add('active');
+    btnModeScan.classList.remove('active');
+    zoneKetik.classList.remove('hidden');
+    zoneScan.classList.add('hidden');
+    matikanScanner();
+});
+
+btnModeScan.addEventListener('click', () => {
+    btnModeScan.classList.add('active');
+    btnModeKetik.classList.remove('active');
+    zoneScan.classList.remove('hidden');
+    zoneKetik.classList.add('hidden');
+    nyalakanScanner();
+});
+
+// FUNGSI KONTROL KAMERA SCANNER
+function nyalakanScanner() {
+    if (!html5QrScannerSiswa) {
+        html5QrScannerSiswa = new Html5QrcodeScanner(
+            "reader-siswa", 
+            { 
+                fps: 15, 
+                qrbox: (width, height) => {
+                    return { width: width * 0.7, height: width * 0.7 }; // Kotak pindai proporsional di HP
+                },
+                aspectRatio: 1.0
+            }, 
+            false
+        );
+        
+        html5QrScannerSiswa.render((decodedText) => {
+            // decodedText berisi NIS hasil scan dari kamera HP siswa
+            prosesCariSiswa(decodedText);
+        }, (error) => {
+            // Pemindaian gagal / mencari fokus (abaikan log agar bersih)
+        });
+    }
+}
+
+function matikanScanner() {
+    if (html5QrScannerSiswa) {
+        html5QrScannerSiswa.clear().then(() => {
+            html5QrScannerSiswa = null;
+        }).catch(err => console.error("Gagal mematikan kamera", err));
+    }
+}
+
+// LOGIKA KIRIM DATA KE SPREADSHEET
 document.getElementById('formAbsen').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!siswaTerpilih) return;
 
-    // Kunci tombol kirim agar tidak terjadi double submit
     const btnSubmit = document.getElementById('btnSubmit');
-    btnSubmit.innerText = "Mengirim...";
+    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim Presensi...';
     btnSubmit.disabled = true;
 
     const payload = {
@@ -57,7 +114,7 @@ document.getElementById('formAbsen').addEventListener('submit', async (e) => {
         kelas: siswaTerpilih.kelas,
         status: document.getElementById('statusAbsen').value,
         keterangan: document.getElementById('keterangan').value,
-        metode: "Mandiri (Siswa)"
+        metode: "Mandiri Berbasis QR"
     };
 
     try {
@@ -67,12 +124,12 @@ document.getElementById('formAbsen').addEventListener('submit', async (e) => {
         });
         const result = await res.json();
         if(result.status === "success") {
-            alert("Presensi Anda berhasil disimpan!");
-            window.location.href = window.location.pathname; // Clear URL parameters & Reset form
+            alert(`Presensi ${siswaTerpilih.nama} berhasil masuk!`);
+            window.location.href = window.location.pathname; // Segarkan halaman & reset
         }
     } catch (error) {
-        alert("Terjadi kesalahan jaringan saat mengirim data absensi.");
-        btnSubmit.innerText = "Kirim Kehadiran";
+        alert("Gangguan jaringan, coba ulangi kirim.");
+        btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Presensi Masuk';
         btnSubmit.disabled = false;
     }
 });
