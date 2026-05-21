@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Mandiri Siswa</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Absensi Mandiri Siswa</h2>
+        <p class="info-p">Silakan masukkan NIS atau scan QR mading kelas Anda.</p>
+        
+        <form id="formAbsen">
+            <label for="nisInput">Masukkan NIS Anda:</label>
+            <div class="search-box">
+                <input type="text" id="nisInput" required placeholder="Contoh: 212201">
+                <button type="button" id="btnCari">Cek Data</button>
+            </div>
+            
+            <div id="detailSiswa" class="hidden">
+                <div class="card-siswa">
+                    <p><strong>Nama:</strong> <span id="txtNama">-</span></p>
+                    <p><strong>Kelas:</strong> <span id="txtKelas">-</span></p>
+                </div>
+                
+                <label for="statusAbsen">Status Kehadiran:</label>
+                <select id="statusAbsen">
+                    <option value="Hadir">Hadir</option>
+                    <option value="Izin">Izin</option>
+                    <option value="Sakit">Sakit</option>
+                </select>
+                
+                <label for="keterangan">Keterangan / Alasan (Opsional):</label>
+                <input type="text" id="keterangan" placeholder="Isi jika izin atau sakit">
+                
+                <button type="submit" id="btnSubmit" class="btn-success">Kirim Kehadiran</button>
+            </div>
+        </form>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

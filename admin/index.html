@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin Absensi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <hr>
+        <button onclick="switchTab('tab-absen-manual')" class="nav-btn active">📷 Scan QR & Manual</button>
+        <button onclick="switchTab('tab-rekap')" class="nav-btn">📊 Unduh Rekap</button>
+        <button onclick="switchTab('tab-kasus')" class="nav-btn">⚠️ Rekap Kasus</button>
+    </div>
+
+    <div class="content">
+        <!-- TAB SCAN QR / MANUAL ABSEN -->
+        <div id="tab-absen-manual" class="tab-content">
+            <h2>Presensi Siswa Lewat Admin</h2>
+            <p>Gunakan kamera untuk scan QR Kartu Pelajar siswa, atau pilih nama secara manual.</p>
+            
+            <div class="scanner-container">
+                <div id="reader"></div>
+            </div>
+
+            <form id="formAdminAbsen" class="admin-form">
+                <label for="adminPilihSiswa">Pilih/Konfirmasi Siswa:</label>
+                <select id="adminPilihSiswa">
+                    <option value="">-- Pilih Siswa --</option>
+                </select>
+                
+                <label for="adminStatus">Status Kehadiran:</label>
+                <select id="adminStatus">
+                    <option value="Hadir">Hadir</option>
+                    <option value="Izin">Izin</option>
+                    <option value="Sakit">Sakit</option>
+                    <option value="Alpa">Alpa</option>
+                </select>
+                <button type="submit" class="btn-primary">Simpan Presensi</button>
+            </form>
+        </div>
+
+        <!-- TAB DOWNLOAD REKAP -->
+        <div id="tab-rekap" class="tab-content hidden">
+            <h2>Download Rekap Data Excel (CSV)</h2>
+            <p>Silakan unduh rekapan absensi langsung untuk ditarik ke Microsoft Excel.</p>
+            <div class="card-action">
+                <button onclick="downloadCSV('rekap_absen', 'Rekap_Absensi_Siswa.csv')" class="btn-download">📥 Download File Absensi (.csv)</button>
+            </div>
+        </div>
+
+        <!-- TAB REKAP KASUS -->
+        <div id="tab-kasus" class="tab-content hidden">
+            <h2>Catatan Kasus / Pelanggaran Siswa</h2>
+            <p>Input riwayat pelanggaran atau ketidakhadiran bermasalah di sini.</p>
+            
+            <form id="formKasus" class="admin-form">
+                <label for="kasusPilihSiswa">Pilih Siswa:</label>
+                <select id="kasusPilihSiswa">
+                    <option value="">-- Pilih Siswa --</option>
+                </select>
+                
+                <label for="jenisKasus">Jenis Pelanggaran / Kasus:</label>
+                <input type="text" id="jenisKasus" required placeholder="Contoh: Alpa 3 hari berturut-turut">
+                
+                <label for="tindakan">Tindakan / Solusi:</label>
+                <input type="text" id="tindakan" required placeholder="Contoh: Panggilan Orang Tua">
+                
+                <button type="submit" class="btn-danger">Simpan Log Kasus</button>
+            </form>
+            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e2e8f0;">
+            <button onclick="downloadCSV('rekap_kasus', 'Rekap_Kasus_Siswa.csv')" class="btn-download" style="background:#718096;">📥 Download File Rekap Kasus (.csv)</button>
+        </div>
+    </div>
+
+    <!-- Pustaka Online Scanner QR Engine -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="app.js"></script>
+</body>
+</html>
