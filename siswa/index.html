@@ -17,26 +17,40 @@
     <div class="container">
         <div class="header-zone">
             <div class="logo-area">
-                <i class="fa-solid fa-camera-retro"></i> </div>
+                <i class="fa-solid fa-camera-retro"></i>
+            </div>
             <h2>E-Presensi Siswa</h2>
-            <p>Pindai QR mading kelas atau masukkan NIS Anda di bawah ini</p>
+            <p>Silakan gunakan pemindai kamera atau ketik NIS Anda di bawah ini</p>
+        </div>
+
+        <div class="method-selector">
+            <button type="button" id="btnModeKetik" class="sub-method active"><i class="fa-solid fa-keyboard"></i> Ketik NIS</button>
+            <button type="button" id="btnModeScan" class="sub-method"><i class="fa-solid fa-qrcode"></i> Scan QR</button>
         </div>
         
         <form id="formAbsen">
-            <div class="input-group">
+            <div id="zoneKetik" class="input-group">
                 <label for="nisInput"><i class="fa-solid fa-id-card"></i> Nomor Induk Siswa (NIS)</label>
                 <div class="search-box">
-                    <input type="text" id="nisInput" required placeholder="Masukkan NIS Anda...">
+                    <input type="text" id="nisInput" placeholder="Masukkan NIS Anda...">
                     <button type="button" id="btnCari">
-                        <span id="btnText"><i class="fa-solid fa-magnifying-glass"></i> Cari</span>
+                        <span><i class="fa-solid fa-magnifying-glass"></i> Cari</span>
                     </button>
                 </div>
+            </div>
+
+            <div id="zoneScan" class="input-group hidden">
+                <label><i class="fa-solid fa-camera"></i> Kamera Pemindai QR</label>
+                <div class="scanner-wrapper">
+                    <div id="reader-siswa"></div>
+                </div>
+                <p class="scan-tip">Arahkan QR Code Kartu Pelajar Anda ke tengah kotak kamera</p>
             </div>
             
             <div id="detailSiswa" class="hidden animated-fade-in">
                 <div class="card-siswa">
                     <div class="avatar-fallback">
-                        <i class="fa-solid fa-user-gradient"></i>
+                        <i class="fa-solid fa-user-check"></i>
                     </div>
                     <div class="bio-siswa">
                         <h4 id="txtNama">Nama Siswa</h4>
@@ -64,6 +78,8 @@
             </div>
         </form>
     </div>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="app.js"></script>
 </body>
 </html>
