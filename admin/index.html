@@ -94,6 +94,33 @@
                 
                 <button type="submit" class="btn-danger">Simpan Log Kasus</button>
             </form>
+            
+            <div class="monitoring-container" style="margin-top: 40px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #2d3748;">Daftar Pelanggaran Siswa</h3>
+                    <button onclick="muatLogKasus()" class="btn-primary" style="background:#718096; width: auto; padding: 8px 15px; margin: 0; font-size: 13px;">
+                        🔄 Refresh Kasus
+                    </button>
+                </div>
+                <div style="overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <table id="tabelLogKasus" style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+                        <thead>
+                            <tr style="background: #edf2f7; color: #4a5568; border-bottom: 2px solid #cbd5e0;">
+                                <th style="padding: 12px;">NIS</th>
+                                <th style="padding: 12px;">Nama</th>
+                                <th style="padding: 12px;">Jenis Kasus/Pelanggaran</th>
+                                <th style="padding: 12px;">Tindakan / Solusi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logKasusBody">
+                            <tr>
+                                <td colspan="4" style="padding: 15px; text-align: center; color: #a0aec0;">Memuat data kasus...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e2e8f0;">
             <button onclick="downloadCSV('rekap_kasus', 'Rekap_Kasus_Siswa.csv')" class="btn-download" style="background:#718096;">📥 Download File Rekap Kasus (.csv)</button>
         </div>
