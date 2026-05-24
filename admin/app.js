@@ -14,6 +14,7 @@ window.onload = async () => {
         
         initDropdowns();
         initQRScanner();
+        muatLogPresensi(); // Memuat log ketika admin pertama kali membuka web
     } catch (err) {
         alert("Gagal terhubung ke database Google Sheets.");
     }
@@ -62,6 +63,7 @@ document.getElementById('formAdminAbsen').addEventListener('submit', async (e) =
     if(result.status === "success") {
         alert(`Berhasil menyimpan presensi: ${siswa.nama}`);
         document.getElementById('formAdminAbsen').reset();
+        muatLogPresensi(); // Segera perbarui log setelah admin menginput manual
     }
 });
 
@@ -100,7 +102,7 @@ async function downloadCSV(target, filename) {
                 let text = val.toString().replace(/"/g, '""'); // Escape tanda petik dua
                 return `"${text}"`;
             }).join(",");
-            csvContent += r + "\r\n";
+            csvContent += r + "\n";
         });
         
         const encodedUri = encodeURI(csvContent);
@@ -132,4 +134,61 @@ function initQRScanner() {
 
     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 }, false);
     html5QrcodeScanner.render(onScanSuccess, (err) => { /* Silent error scanner */ });
+}
+
+// FUNGSI TARIK DATA LOG ABSENSI UNTUK MONITORING REAL-TIME
+async function muatLogPresensi() {
+    const tbody = document.getElementById('logPresensiBody');
+    if(!tbody) return;
+
+    try {
+        // Tarik data menggunakan target rekap_absen yang sudah ada di Apps Script
+        const res = await fetch(`${API_URL}?target=rekap_absen`);
+        const data = await res.json();
+        
+        tbody.innerHTML = "";
+        
+        // Cek jika data kosong atau hanya berisi baris header saja
+        if (!data || data.length <= 1) {
+            tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #a0aec0;">Belum ada riwayat presensi hari ini.</td></tr>`;
+            return;
+        }
+
+        // Looping data terbalik (dari data paling baru masuk / paling bawah di Sheet)
+        // Melewatkan data[0] karena merupakan header kolom
+        for (let i = data.length - 1; i > 0; i--) {
+            const row = data[i];
+            
+            // Pemetaan urutan kolom Spreadsheet: [Timestamp, NIS, Nama, Kelas, Status, Keterangan, Metode]
+            const nis = row[1] || "-";
+            const nama = row[2] || "-";
+            const kelas = row[3] || "-";
+            const status = row[4] || "-";
+            const metode = row[6] || row[5] || "Mandiri"; 
+
+            // Penentuan warna badge status presensi
+            let color = "#4a5568";
+            if(status.toLowerCase().includes("hadir")) color = "#48bb78";
+            if(status.toLowerCase().includes("izin")) color = "#ecc94b";
+            if(status.toLowerCase().includes("sakit")) color = "#4299e1";
+            if(status.toLowerCase().includes("alpa")) color = "#f56565";
+
+            let tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid #e2e8f0";
+            tr.innerHTML = `
+                <td style="padding: 12px; color: #4a5568;">${nis}</td>
+                <td style="padding: 12px; font-weight: 600;">${nama}</td>
+                <td style="padding: 12px; color: #4a5568;">${kelas}</td>
+                <td style="padding: 12px;">
+                    <span style="background: ${color}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                        ${status}
+                    </span>
+                </td>
+                <td style="padding: 12px; color: #718096; font-size: 13px;">${metode}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #e53e3e;">Gagal memuat data log. Silakan klik Refresh Data.</td></tr>`;
+    }
 }
