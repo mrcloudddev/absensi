@@ -22,16 +22,17 @@ window.onload = async () => {
 
 function initDropdowns() {
     const selectAbsen = document.getElementById('adminPilihSiswa');
-    const selectKasus = document.getElementById('kasusPilihSiswa');
+    const selectKasus = document.getElementById('casPilihSiswa'); // Disesuaikan dengan ID elemen jika ada typo sebelumnya
+    const selectKasusBeneran = document.getElementById('kasusPilihSiswa');
     
     // Reset dropdown tapi sisakan opsi placeholder pertama
-    selectAbsen.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-    selectKasus.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+    if(selectAbsen) selectAbsen.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+    if(selectKasusBeneran) selectKasusBeneran.innerHTML = '<option value="">-- Pilih Siswa --</option>';
 
     dataSiswaAdmin.forEach(s => {
         let opt = `<option value="${s.nis}">${s.nama} (${s.kelas})</option>`;
-        selectAbsen.innerHTML += opt;
-        selectKasus.innerHTML += opt;
+        if(selectAbsen) selectAbsen.innerHTML += opt;
+        if(selectKasusBeneran) selectKasusBeneran.innerHTML += opt;
     });
 }
 
@@ -40,7 +41,9 @@ function switchTab(tabId) {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     
     document.getElementById(tabId).classList.remove('hidden');
-    event.currentTarget.classList.add('active');
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
 }
 
 // LOGIKA INPUT ABSENSI OLEH ADMIN
@@ -58,12 +61,16 @@ document.getElementById('formAdminAbsen').addEventListener('submit', async (e) =
         metode: "Input Manual Admin"
     };
 
-    const res = await fetch(`${API_URL}?target=absen`, { method: 'POST', body: JSON.stringify(payload) });
-    const result = await res.json();
-    if(result.status === "success") {
-        alert(`Berhasil menyimpan presensi: ${siswa.nama}`);
-        document.getElementById('formAdminAbsen').reset();
-        muatLogPresensi(); // Segera perbarui log setelah admin menginput manual
+    try {
+        const res = await fetch(`${API_URL}?target=absen`, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        if(result.status === "success") {
+            alert(`Berhasil menyimpan presensi: ${siswa.nama}`);
+            document.getElementById('formAdminAbsen').reset();
+            muatLogPresensi(); // Segera perbarui log setelah admin menginput manual
+        }
+    } catch (error) {
+        alert("Gagal menyimpan presensi.");
     }
 });
 
@@ -81,11 +88,15 @@ document.getElementById('formKasus').addEventListener('submit', async (e) => {
         tindakan: document.getElementById('tindakan').value
     };
 
-    const res = await fetch(`${API_URL}?target=tambah_kasus`, { method: 'POST', body: JSON.stringify(payload) });
-    const result = await res.json();
-    if(result.status === "success") {
-        alert(`Catatan kasus untuk ${siswa.nama} berhasil dimasukkan.`);
-        document.getElementById('formKasus').reset();
+    try {
+        const res = await fetch(`${API_URL}?target=tambah_kasus`, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        if(result.status === "success") {
+            alert(`Catatan kasus untuk ${siswa.nama} berhasil dimasukkan.`);
+            document.getElementById('formKasus').reset();
+        }
+    } catch (error) {
+        alert("Gagal menyimpan data kasus.");
     }
 });
 
@@ -99,7 +110,7 @@ async function downloadCSV(target, filename) {
         
         data.forEach(row => {
             let r = row.map(val => {
-                let text = val.toString().replace(/"/g, '""'); // Escape tanda petik dua
+                let text = val ? val.toString().replace(/"/g, '""') : ""; // Escape tanda petik dua secara aman
                 return `"${text}"`;
             }).join(",");
             csvContent += r + "\n";
@@ -136,42 +147,48 @@ function initQRScanner() {
     html5QrcodeScanner.render(onScanSuccess, (err) => { /* Silent error scanner */ });
 }
 
-// FUNGSI TARIK DATA LOG ABSENSI UNTUK MONITORING REAL-TIME
+// FUNGSI TARIK DATA LOG ABSENSI UNTUK MONITORING REAL-TIME (VERSI AMAN & ANTI-LAG)
 async function muatLogPresensi() {
     const tbody = document.getElementById('logPresensiBody');
     if(!tbody) return;
 
     try {
-        // Tarik data menggunakan target rekap_absen yang sudah ada di Apps Script
+        tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #718096;">🔄 Memproses sinkronisasi Google Sheets...</td></tr>`;
+
+        // Ambil data langsung dari Apps Script
         const res = await fetch(`${API_URL}?target=rekap_absen`);
-        const data = await res.json();
+        if (!res.ok) throw new Error("Gagal mengambil respons dari Apps Script");
         
+        const data = await res.json();
         tbody.innerHTML = "";
         
-        // Cek jika data kosong atau hanya berisi baris header saja
+        // Proteksi jika data kosong atau hanya berisi baris judul/header sheet
         if (!data || data.length <= 1) {
             tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #a0aec0;">Belum ada riwayat presensi hari ini.</td></tr>`;
             return;
         }
 
-        // Looping data terbalik (dari data paling baru masuk / paling bawah di Sheet)
-        // Melewatkan data[0] karena merupakan header kolom
+        // Looping terbalik: baris terbawah di Google Sheets (absen terbaru) dirender paling atas
         for (let i = data.length - 1; i > 0; i--) {
             const row = data[i];
             
-            // Pemetaan urutan kolom Spreadsheet: [Timestamp, NIS, Nama, Kelas, Status, Keterangan, Metode]
-            const nis = row[1] || "-";
-            const nama = row[2] || "-";
-            const kelas = row[3] || "-";
-            const status = row[4] || "-";
-            const metode = row[6] || row[5] || "Mandiri"; 
+            // Antisipasi jika ada baris kosong di tengah-tengah spreadsheet data
+            if (!row || row.length < 2) continue; 
 
-            // Penentuan warna badge status presensi
+            // Mapping kolom index secara aman mencegah error undefined data
+            const nis = row[1] ? row[1].toString() : "-";
+            const nama = row[2] ? row[2].toString() : "-";
+            const kelas = row[3] ? row[3].toString() : "-";
+            const status = row[4] ? row[4].toString() : "-";
+            const metode = row[6] ? row[6].toString() : (row[5] ? row[5].toString() : "Mandiri"); 
+
+            // Mengatur warna status label secara dinamis
             let color = "#4a5568";
-            if(status.toLowerCase().includes("hadir")) color = "#48bb78";
-            if(status.toLowerCase().includes("izin")) color = "#ecc94b";
-            if(status.toLowerCase().includes("sakit")) color = "#4299e1";
-            if(status.toLowerCase().includes("alpa")) color = "#f56565";
+            const statusCek = status.toLowerCase();
+            if(statusCek.includes("hadir")) color = "#48bb78";
+            else if(statusCek.includes("izin")) color = "#ecc94b";
+            else if(statusCek.includes("sakit")) color = "#4299e1";
+            else if(statusCek.includes("alpa")) color = "#f56565";
 
             let tr = document.createElement('tr');
             tr.style.borderBottom = "1px solid #e2e8f0";
@@ -189,6 +206,7 @@ async function muatLogPresensi() {
             tbody.appendChild(tr);
         }
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #e53e3e;">Gagal memuat data log. Silakan klik Refresh Data.</td></tr>`;
+        console.error("Detail Error Log:", err);
+        tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #e53e3e;">⚠️ Gagal memuat log presensi. <br><small>Pastikan koneksi internet stabil atau coba klik tombol Refresh kembali.</small></td></tr>`;
     }
 }
