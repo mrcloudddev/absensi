@@ -22,7 +22,6 @@ window.onload = async () => {
 
 function initDropdowns() {
     const selectAbsen = document.getElementById('adminPilihSiswa');
-    const selectKasus = document.getElementById('casPilihSiswa'); // Disesuaikan dengan ID elemen jika ada typo sebelumnya
     const selectKasusBeneran = document.getElementById('kasusPilihSiswa');
     
     // Reset dropdown tapi sisakan opsi placeholder pertama
@@ -147,7 +146,7 @@ function initQRScanner() {
     html5QrcodeScanner.render(onScanSuccess, (err) => { /* Silent error scanner */ });
 }
 
-// FUNGSI TARIK DATA LOG ABSENSI UNTUK MONITORING REAL-TIME (VERSI AMAN & ANTI-LAG)
+// FUNGSI TARIK DATA LOG ABSENSI KHUSUS HARI INI SAJA (DATA LAMA DIABAIKAN)
 async function muatLogPresensi() {
     const tbody = document.getElementById('logPresensiBody');
     if(!tbody) return;
@@ -168,12 +167,37 @@ async function muatLogPresensi() {
             return;
         }
 
-        // Looping terbalik: baris terbawah di Google Sheets (absen terbaru) dirender paling atas
+        // Mendapatkan string Tanggal Hari Ini dengan format lokal (DD/MM/YYYY atau YYYY-MM-DD tergantung setelan regional regional sheet Anda)
+        // Kita buat pencocokan string yang fleksibel menggunakan objek Date perangkat
+        const hariIni = new Date();
+        const tgl = String(hariIni.getDate()).padStart(2, '0');
+        const bln = String(hariIni.getMonth() + 1).padStart(2, '0');
+        const thn = hariIni.getFullYear();
+        
+        // Variabel penampung format tanggal umum dari Google Sheets (Contoh: "24/05/2026" atau "2026-05-24")
+        const formatSatu = `${tgl}/${bln}/${thn}`;
+        const formatDua = `${thn}-${bln}-${tgl}`;
+
+        let adaDataHariIni = false;
+
+        // Looping terbalik: baris terbawah di Google Sheets dirender paling atas
         for (let i = data.length - 1; i > 0; i--) {
             const row = data[i];
             
             // Antisipasi jika ada baris kosong di tengah-tengah spreadsheet data
-            if (!row || row.length < 2) continue; 
+            if (!row || row.length < 5) continue; 
+
+            // Ambil data Timestamp di kolom index 0
+            const timestampRaw = row[0] ? row[0].toString() : "";
+
+            // FILTER TANGGAL: Jika timestamp baris tidak mengandung tanggal hari ini, lewati (jangan dimunculkan)
+            if (!timestampRaw.includes(formatSatu) && !timestampRaw.includes(formatDua)) {
+                // Catatan: Jika format tanggal di spreadsheet Anda kustom (misal menggunakan nama bulan seperti "24 Mei 2026"), 
+                // Anda juga bisa mencocokkannya langsung dengan potongan string unik, contoh: .includes(`${tgl}/`)
+                continue; 
+            }
+
+            adaDataHariIni = true;
 
             // Mapping kolom index secara aman mencegah error undefined data
             const nis = row[1] ? row[1].toString() : "-";
@@ -205,6 +229,12 @@ async function muatLogPresensi() {
             `;
             tbody.appendChild(tr);
         }
+
+        // Jika semua data lama terfilter dan tidak ada satu pun data untuk tanggal hari ini
+        if (!adaDataHariIni) {
+            tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #a0aec0;">Belum ada riwayat presensi masuk untuk hari ini.</td></tr>`;
+        }
+
     } catch (err) {
         console.error("Detail Error Log:", err);
         tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #e53e3e;">⚠️ Gagal memuat log presensi. <br><small>Pastikan koneksi internet stabil atau coba klik tombol Refresh kembali.</small></td></tr>`;
