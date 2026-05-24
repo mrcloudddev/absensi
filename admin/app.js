@@ -5,16 +5,14 @@ let dataSiswaAdmin = [];
 let html5QrcodeScanner = null;
 
 window.onload = async () => {
-    // Jalankan otentikasi login admin sederhana di sini jika dibutuhkan
-    // let pass = prompt("Masukkan Password Admin:"); if(pass !== "12345") { document.body.innerHTML = "Akses Ditolak"; return; }
-
     try {
         const res = await fetch(`${API_URL}?target=data_siswa`);
         dataSiswaAdmin = await res.json();
         
         initDropdowns();
         initQRScanner();
-        muatLogPresensi(); // Memuat log ketika admin pertama kali membuka web
+        muatLogPresensi(); // Memuat log presensi di awal buka
+        muatLogKasus();    // Memuat log kasus pelanggaran di awal buka
     } catch (err) {
         alert("Gagal terhubung ke database Google Sheets.");
     }
@@ -24,7 +22,6 @@ function initDropdowns() {
     const selectAbsen = document.getElementById('adminPilihSiswa');
     const selectKasusBeneran = document.getElementById('kasusPilihSiswa');
     
-    // Reset dropdown tapi sisakan opsi placeholder pertama
     if(selectAbsen) selectAbsen.innerHTML = '<option value="">-- Pilih Siswa --</option>';
     if(selectKasusBeneran) selectKasusBeneran.innerHTML = '<option value="">-- Pilih Siswa --</option>';
 
@@ -66,14 +63,14 @@ document.getElementById('formAdminAbsen').addEventListener('submit', async (e) =
         if(result.status === "success") {
             alert(`Berhasil menyimpan presensi: ${siswa.nama}`);
             document.getElementById('formAdminAbsen').reset();
-            muatLogPresensi(); // Segera perbarui log setelah admin menginput manual
+            muatLogPresensi();
         }
     } catch (error) {
         alert("Gagal menyimpan presensi.");
     }
 });
 
-// LOGIKA REKAP KASUS SISWA
+// LOGIKA REKAP KASUS SISWA OLEH ADMIN
 document.getElementById('formKasus').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nis = document.getElementById('kasusPilihSiswa').value;
@@ -93,6 +90,7 @@ document.getElementById('formKasus').addEventListener('submit', async (e) => {
         if(result.status === "success") {
             alert(`Catatan kasus untuk ${siswa.nama} berhasil dimasukkan.`);
             document.getElementById('formKasus').reset();
+            muatLogKasus(); // Otomatis refresh daftar tabel log kasus setelah ditambahkan
         }
     } catch (error) {
         alert("Gagal menyimpan data kasus.");
@@ -105,11 +103,11 @@ async function downloadCSV(target, filename) {
         const res = await fetch(`${API_URL}?target=${target}`);
         const data = await res.json();
         
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Menggunakan BOM \uFEFF agar terbaca rapi di Excel
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
         
         data.forEach(row => {
             let r = row.map(val => {
-                let text = val ? val.toString().replace(/"/g, '""') : ""; // Escape tanda petik dua secara aman
+                let text = val ? val.toString().replace(/"/g, '""') : "";
                 return `"${text}"`;
             }).join(",");
             csvContent += r + "\n";
@@ -131,7 +129,6 @@ async function downloadCSV(target, filename) {
 function initQRScanner() {
     function onScanSuccess(decodedText) {
         const selectAbsen = document.getElementById('adminPilihSiswa');
-        // Cari apakah NIS terdaftar
         const cocok = dataSiswaAdmin.some(s => s.nis.trim() === decodedText.trim());
         
         if (cocok) {
@@ -143,10 +140,10 @@ function initQRScanner() {
     }
 
     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 }, false);
-    html5QrcodeScanner.render(onScanSuccess, (err) => { /* Silent error scanner */ });
+    html5QrcodeScanner.render(onScanSuccess, (err) => {});
 }
 
-// FUNGSI TARIK DATA LOG ABSENSI KHUSUS HARI INI SAJA (DATA LAMA DIABAIKAN)
+// FUNGSI TARIK DATA LOG ABSENSI KHUSUS HARI INI SAJA
 async function muatLogPresensi() {
     const tbody = document.getElementById('logPresensiBody');
     if(!tbody) return;
@@ -154,59 +151,45 @@ async function muatLogPresensi() {
     try {
         tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #718096;">🔄 Memproses sinkronisasi Google Sheets...</td></tr>`;
 
-        // Ambil data langsung dari Apps Script
         const res = await fetch(`${API_URL}?target=rekap_absen`);
         if (!res.ok) throw new Error("Gagal mengambil respons dari Apps Script");
         
         const data = await res.json();
         tbody.innerHTML = "";
         
-        // Proteksi jika data kosong atau hanya berisi baris judul/header sheet
         if (!data || data.length <= 1) {
             tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #a0aec0;">Belum ada riwayat presensi hari ini.</td></tr>`;
             return;
         }
 
-        // Mendapatkan string Tanggal Hari Ini dengan format lokal (DD/MM/YYYY atau YYYY-MM-DD tergantung setelan regional regional sheet Anda)
-        // Kita buat pencocokan string yang fleksibel menggunakan objek Date perangkat
         const hariIni = new Date();
         const tgl = String(hariIni.getDate()).padStart(2, '0');
         const bln = String(hariIni.getMonth() + 1).padStart(2, '0');
         const thn = hariIni.getFullYear();
         
-        // Variabel penampung format tanggal umum dari Google Sheets (Contoh: "24/05/2026" atau "2026-05-24")
         const formatSatu = `${tgl}/${bln}/${thn}`;
         const formatDua = `${thn}-${bln}-${tgl}`;
 
         let adaDataHariIni = false;
 
-        // Looping terbalik: baris terbawah di Google Sheets dirender paling atas
         for (let i = data.length - 1; i > 0; i--) {
             const row = data[i];
-            
-            // Antisipasi jika ada baris kosong di tengah-tengah spreadsheet data
             if (!row || row.length < 5) continue; 
 
-            // Ambil data Timestamp di kolom index 0
             const timestampRaw = row[0] ? row[0].toString() : "";
 
-            // FILTER TANGGAL: Jika timestamp baris tidak mengandung tanggal hari ini, lewati (jangan dimunculkan)
             if (!timestampRaw.includes(formatSatu) && !timestampRaw.includes(formatDua)) {
-                // Catatan: Jika format tanggal di spreadsheet Anda kustom (misal menggunakan nama bulan seperti "24 Mei 2026"), 
-                // Anda juga bisa mencocokkannya langsung dengan potongan string unik, contoh: .includes(`${tgl}/`)
                 continue; 
             }
 
             adaDataHariIni = true;
 
-            // Mapping kolom index secara aman mencegah error undefined data
             const nis = row[1] ? row[1].toString() : "-";
             const nama = row[2] ? row[2].toString() : "-";
             const kelas = row[3] ? row[3].toString() : "-";
             const status = row[4] ? row[4].toString() : "-";
             const metode = row[6] ? row[6].toString() : (row[5] ? row[5].toString() : "Mandiri"); 
 
-            // Mengatur warna status label secara dinamis
             let color = "#4a5568";
             const statusCek = status.toLowerCase();
             if(statusCek.includes("hadir")) color = "#48bb78";
@@ -230,13 +213,58 @@ async function muatLogPresensi() {
             tbody.appendChild(tr);
         }
 
-        // Jika semua data lama terfilter dan tidak ada satu pun data untuk tanggal hari ini
         if (!adaDataHariIni) {
             tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #a0aec0;">Belum ada riwayat presensi masuk untuk hari ini.</td></tr>`;
         }
 
     } catch (err) {
-        console.error("Detail Error Log:", err);
-        tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #e53e3e;">⚠️ Gagal memuat log presensi. <br><small>Pastikan koneksi internet stabil atau coba klik tombol Refresh kembali.</small></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: #e53e3e;">⚠️ Gagal memuat log presensi.</td></tr>`;
+    }
+}
+
+// FUNGSI TARIK DATA LOG KASUS / PELANGGARAN SISWA SECARA VISUAL
+async function muatLogKasus() {
+    const tbody = document.getElementById('logKasusBody');
+    if(!tbody) return;
+
+    try {
+        tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: #718096;">🔄 Memproses sinkronisasi data kasus...</td></tr>`;
+
+        // Memanfaatkan target 'rekap_kasus' yang sudah terintegrasi di Apps Script Anda
+        const res = await fetch(`${API_URL}?target=rekap_kasus`);
+        if (!res.ok) throw new Error("Gagal mengambil data rekap kasus");
+
+        const data = await res.json();
+        tbody.innerHTML = "";
+
+        if (!data || data.length <= 1) {
+            tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: #a0aec0;">Belum ada riwayat catatan kasus siswa.</td></tr>`;
+            return;
+        }
+
+        // Loop terbalik agar input pelanggaran terbaru berada di tumpukan paling atas tabel
+        for (let i = data.length - 1; i > 0; i--) {
+            const row = data[i];
+            if (!row || row.length < 3) continue; // Skip baris kosong
+
+            // Pemetaan indeks array Spreadsheet Kasus: [Timestamp, NIS, Nama, Jenis Kasus, Tindakan/Solusi]
+            const nis = row[1] ? row[1].toString() : "-";
+            const nama = row[2] ? row[2].toString() : "-";
+            const kasus = row[3] ? row[3].toString() : "-";
+            const tindakan = row[4] ? row[4].toString() : "-";
+
+            let tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid #e2e8f0";
+            tr.innerHTML = `
+                <td style="padding: 12px; color: #4a5568;">${nis}</td>
+                <td style="padding: 12px; font-weight: 600; color: #2d3748;">${nama}</td>
+                <td style="padding: 12px; color: #e53e3e; font-weight: 500;">⚠️ ${kasus}</td>
+                <td style="padding: 12px; color: #2b6cb0; font-style: italic;">${tindakan}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    } catch (err) {
+        console.error("Detail Error Log Kasus:", err);
+        tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: #e53e3e;">⚠️ Gagal sinkronisasi daftar kasus.</td></tr>`;
     }
 }
