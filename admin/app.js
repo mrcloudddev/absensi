@@ -32,15 +32,7 @@ function initDropdowns() {
     });
 }
 
-function switchTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    
-    document.getElementById(tabId).classList.remove('hidden');
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-    }
-}
+// switchTab handled in index.html
 
 // LOGIKA INPUT ABSENSI OLEH ADMIN
 document.getElementById('formAdminAbsen').addEventListener('submit', async (e) => {
@@ -200,15 +192,15 @@ async function muatLogPresensi() {
             let tr = document.createElement('tr');
             tr.style.borderBottom = "1px solid #e2e8f0";
             tr.innerHTML = `
-                <td style="padding: 12px; color: #4a5568;">${nis}</td>
-                <td style="padding: 12px; font-weight: 600;">${nama}</td>
-                <td style="padding: 12px; color: #4a5568;">${kelas}</td>
-                <td style="padding: 12px;">
+                <td data-label="NIS" style="padding: 12px; color: #4a5568;">${nis}</td>
+                <td data-label="Nama" style="padding: 12px; font-weight: 600;">${nama}</td>
+                <td data-label="Kelas" style="padding: 12px; color: #4a5568;">${kelas}</td>
+                <td data-label="Status" style="padding: 12px;">
                     <span style="background: ${color}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
                         ${status}
                     </span>
                 </td>
-                <td style="padding: 12px; color: #718096; font-size: 13px;">${metode}</td>
+                <td data-label="Metode" style="padding: 12px; color: #718096; font-size: 13px;">${metode}</td>
             `;
             tbody.appendChild(tr);
         }
@@ -256,10 +248,10 @@ async function muatLogKasus() {
             let tr = document.createElement('tr');
             tr.style.borderBottom = "1px solid #e2e8f0";
             tr.innerHTML = `
-                <td style="padding: 12px; color: #4a5568;">${nis}</td>
-                <td style="padding: 12px; font-weight: 600; color: #2d3748;">${nama}</td>
-                <td style="padding: 12px; color: #e53e3e; font-weight: 500;">⚠️ ${kasus}</td>
-                <td style="padding: 12px; color: #2b6cb0; font-style: italic;">${tindakan}</td>
+                <td data-label="NIS" style="padding: 12px; color: #4a5568;">${nis}</td>
+                <td data-label="Nama" style="padding: 12px; font-weight: 600; color: #2d3748;">${nama}</td>
+                <td data-label="Jenis Kasus" style="padding: 12px; color: #e53e3e; font-weight: 500;">⚠️ ${kasus}</td>
+                <td data-label="Tindakan" style="padding: 12px; color: #2b6cb0; font-style: italic;">${tindakan}</td>
             `;
             tbody.appendChild(tr);
         }
