@@ -1,20 +1,121 @@
-body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: #f7fafc; color: #2d3748; }
-.sidebar { width: 260px; background: #1a202c; color: white; height: 100vh; padding: 25px 15px; box-sizing: border-box; position: fixed; }
-.sidebar h2 { font-size: 20px; text-align: center; margin-bottom: 20px; color: #edf2f7; }
+/* === RESET & BASE === */
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f7fafc; color: #2d3748; }
+
+/* === SIDEBAR === */
+.sidebar {
+    width: 260px;
+    background: #1a202c;
+    color: white;
+    height: 100vh;
+    padding: 25px 15px;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 200;
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+.sidebar h2 { font-size: 18px; text-align: center; margin-bottom: 20px; color: #edf2f7; }
 .sidebar hr { border: 0; border-top: 1px solid #2d3748; margin-bottom: 20px; }
-.nav-btn { background: none; border: none; color: #a0aec0; width: 100%; text-align: left; padding: 14px 18px; font-size: 16px; cursor: pointer; border-radius: 6px; margin-bottom: 8px; transition: 0.2s; }
+.nav-btn {
+    background: none; border: none; color: #a0aec0;
+    width: 100%; text-align: left; padding: 14px 18px;
+    font-size: 15px; cursor: pointer; border-radius: 6px;
+    margin-bottom: 8px; transition: 0.2s; display: block;
+}
 .nav-btn:hover, .nav-btn.active { background: #2d3748; color: white; }
-.content { flex: 1; padding: 40px; margin-left: 260px; min-height: 100vh; }
-.tab-content { background: white; padding: 35px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); max-width: 700px; }
-.tab-content h2 { margin-top: 0; color: #2d3748; }
+
+/* === HAMBURGER === */
+.hamburger {
+    display: none;
+    position: fixed;
+    top: 14px; left: 14px;
+    z-index: 300;
+    background: #1a202c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 44px; height: 44px;
+    font-size: 20px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+}
+
+/* === OVERLAY === */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 150;
+}
+.sidebar-overlay.visible { display: block; }
+
+/* === MAIN CONTENT === */
+.content {
+    flex: 1;
+    padding: 35px 30px;
+    margin-left: 260px;
+    min-height: 100vh;
+}
+.tab-content {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    max-width: 720px;
+}
+.tab-content h2 { margin-top: 0; color: #2d3748; font-size: 20px; }
 .hidden { display: none; }
+
+/* === FORM ELEMENTS === */
 label { display: block; margin: 15px 0 6px; font-weight: 600; color: #4a5568; }
-input, select, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #cbd5e0; box-sizing: border-box; font-size: 15px; }
-.scanner-container { background: #edf2f7; border: 2px dashed #cbd5e0; border-radius: 8px; padding: 10px; max-width: 450px; margin-bottom: 25px; overflow: hidden; }
+input, select, button { width: 100%; padding: 13px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e0; box-sizing: border-box; font-size: 15px; }
+input:focus, select:focus { outline: none; border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49,130,206,0.15); }
+
+/* === SCANNER === */
+.scanner-container { background: #edf2f7; border: 2px dashed #cbd5e0; border-radius: 8px; padding: 10px; max-width: 450px; margin-bottom: 20px; overflow: hidden; }
 #reader { width: 100%; background: white; }
-.btn-primary { background: #3182ce; color: white; border: none; font-weight: bold; cursor: pointer; }
+
+/* === BUTTONS === */
+.btn-primary { background: #3182ce; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
 .btn-primary:hover { background: #2b6cb0; }
 .btn-danger { background: #e53e3e; color: white; border: none; font-weight: bold; cursor: pointer; }
 .btn-danger:hover { background: #c53030; }
-.btn-download { background: #38a169; color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; width: auto; min-width: 250px; }
+.btn-download { background: #38a169; color: white; border: none; font-weight: bold; cursor: pointer; padding: 14px 20px; width: auto; min-width: 220px; border-radius: 8px; }
 .btn-download:hover { background: #2f855a; }
+
+/* === TOP BAR ROW === */
+.top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+.top-row h3 { margin: 0; color: #2d3748; }
+.top-row .btn-primary { width: auto; padding: 8px 14px; margin: 0; font-size: 13px; }
+
+/* === TABLES === */
+.table-scroll { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px; -webkit-overflow-scrolling: touch; }
+.table-scroll table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; min-width: 460px; }
+.table-scroll th { background: #edf2f7; color: #4a5568; border-bottom: 2px solid #cbd5e0; padding: 11px 12px; white-space: nowrap; }
+.table-scroll td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; }
+.table-scroll tr:last-child td { border-bottom: none; }
+
+/* Card style untuk tabel di HP kecil */
+@media (max-width: 480px) {
+    .table-scroll table, .table-scroll thead, .table-scroll tbody, .table-scroll th, .table-scroll td, .table-scroll tr { display: block; }
+    .table-scroll thead tr { position: absolute; top: -9999px; left: -9999px; }
+    .table-scroll tr { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; padding: 10px; background: #fff; }
+    .table-scroll td { border: none; padding: 5px 6px; font-size: 13px; display: flex; gap: 8px; }
+    .table-scroll td::before { content: attr(data-label); font-weight: 600; color: #4a5568; min-width: 90px; flex-shrink: 0; }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .hamburger { display: flex; }
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .content { margin-left: 0; padding: 70px 16px 24px; }
+    .tab-content { padding: 20px 16px; }
+    .tab-content h2 { font-size: 17px; }
+    .admin-form input, .admin-form select, .admin-form button { font-size: 16px; }
+    .scanner-container { max-width: 100%; }
+    .btn-download { width: 100%; min-width: unset; }
+}
