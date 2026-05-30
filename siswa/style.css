@@ -287,3 +287,19 @@ input:focus, select:focus {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== RESPONSIVE IMPROVEMENTS ===== */
+@media (max-width: 480px) {
+    body { padding: 12px; align-items: flex-start; padding-top: 20px; }
+    .container { padding: 24px 16px; border-radius: 18px; }
+    h2 { font-size: 19px; }
+    .method-selector { margin-bottom: 18px; }
+    .sub-method { font-size: 13px; padding: 10px 6px; gap: 5px; }
+    input, select { font-size: 16px; padding: 13px 14px; }
+    .btn-success { padding: 15px; font-size: 15px; }
+    .search-box button { padding: 0 14px; font-size: 15px; }
+    .scanner-wrapper { border-radius: 12px; }
+}
+
+/* Pastikan QR reader tidak overflow */
+#reader-siswa video { max-width: 100%; border-radius: 8px; }
