@@ -7,126 +7,168 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <hr>
-        <button onclick="switchTab('tab-absen-manual')" class="nav-btn active">📸 Scan QR & Manual</button>
-        <button onclick="switchTab('tab-rekap')" class="nav-btn">📥 Unduh Rekap</button>
-        <button onclick="switchTab('tab-kasus')" class="nav-btn">📋 Rekap Kasus</button>
-    </div>
 
-    <div class="content">
-        <div id="tab-absen-manual" class="tab-content">
-            <h2>Presensi Siswa Lewat Admin</h2>
-            <p>Gunakan kamera untuk scan QR Kartu Pelajar siswa, atau pilih nama secara manual.</p>
-            
-            <div class="scanner-container">
-                <div id="reader"></div>
-            </div>
+<!-- Hamburger (mobile only) -->
+<button class="hamburger" id="hamburger" aria-label="Buka Menu">☰</button>
 
-            <form id="formAdminAbsen" class="admin-form">
-                <label for="adminPilihSiswa">Pilih/Konfirmasi Siswa:</label>
-                <select id="adminPilihSiswa">
-                    <option value="">-- Pilih Siswa --</option>
-                </select>
-                
-                <label for="adminStatus">Status Kehadiran:</label>
-                <select id="adminStatus">
-                    <option value="Hadir">Hadir</option>
-                    <option value="Izin">Izin</option>
-                    <option value="Sakit">Sakit</option>
-                    <option value="Alpa">Alpa</option>
-                </select>
-                <button type="submit" class="btn-primary">Simpan Presensi</button>
-            </form>
+<!-- Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-            <div class="monitoring-container" style="margin-top: 40px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin: 0; color: #2d3748;">Log Presensi Hari Ini</h3>
-                    <button onclick="muatLogPresensi()" class="btn-primary" style="width: auto; padding: 8px 15px; margin: 0; font-size: 13px;">
-                        🔄 Refresh Data
-                    </button>
-                </div>
-                <div style="overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px;">
-                    <table id="tabelLogPresensi" style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
-                        <thead>
-                            <tr style="background: #edf2f7; color: #4a5568; border-bottom: 2px solid #cbd5e0;">
-                                <th style="padding: 12px;">NIS</th>
-                                <th style="padding: 12px;">Nama</th>
-                                <th style="padding: 12px;">Kelas</th>
-                                <th style="padding: 12px;">Status</th>
-                                <th style="padding: 12px;">Metode</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logPresensiBody">
-                            <tr>
-                                <td colspan="5" style="padding: 15px; text-align: center; color: #a0aec0;">Memuat data presensi terbaru...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <h2>Admin Panel</h2>
+    <hr>
+    <button onclick="switchTab('tab-absen-manual', this)" class="nav-btn active">📸 Scan QR &amp; Manual</button>
+    <button onclick="switchTab('tab-rekap', this)" class="nav-btn">📥 Unduh Rekap</button>
+    <button onclick="switchTab('tab-kasus', this)" class="nav-btn">📋 Rekap Kasus</button>
+</div>
+
+<!-- Main Content -->
+<div class="content">
+
+    <!-- Tab: Absensi Manual -->
+    <div id="tab-absen-manual" class="tab-content">
+        <h2>Presensi Siswa Lewat Admin</h2>
+        <p>Gunakan kamera untuk scan QR Kartu Pelajar siswa, atau pilih nama secara manual.</p>
+
+        <div class="scanner-container">
+            <div id="reader"></div>
         </div>
 
-        <div id="tab-rekap" class="tab-content hidden">
-            <h2>Download Rekap Data Excel (CSV)</h2>
-            <p>Silakan unduh rekapan absensi langsung untuk ditarik ke Microsoft Excel.</p>
-            <div class="card-action">
-                <button onclick="downloadCSV('rekap_absen', 'Rekap_Absensi_Siswa.csv')" class="btn-download">📥 Download File Absensi (.csv)</button>
-            </div>
-        </div>
+        <form id="formAdminAbsen" class="admin-form">
+            <label for="adminPilihSiswa">Pilih/Konfirmasi Siswa:</label>
+            <select id="adminPilihSiswa">
+                <option value="">-- Pilih Siswa --</option>
+            </select>
 
-        <div id="tab-kasus" class="tab-content hidden">
-            <h2>Catatan Kasus / Pelanggaran Siswa</h2>
-            <p>Input riwayat pelanggaran atau ketidakhadiran bermasalah di sini.</p>
-            
-            <form id="formKasus" class="admin-form">
-                <label for="kasusPilihSiswa">Pilih Siswa:</label>
-                <select id="kasusPilihSiswa">
-                    <option value="">-- Pilih Siswa --</option>
-                </select>
-                
-                <label for="jenisKasus">Jenis Pelanggaran / Kasus:</label>
-                <input type="text" id="jenisKasus" required placeholder="Contoh: Alpa 3 hari berturut-turut">
-                
-                <label for="tindakan">Tindakan / Solusi:</label>
-                <input type="text" id="tindakan" required placeholder="Contoh: Panggilan Orang Tua">
-                
-                <button type="submit" class="btn-danger">Simpan Log Kasus</button>
-            </form>
-            
-            <div class="monitoring-container" style="margin-top: 40px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin: 0; color: #2d3748;">Daftar Pelanggaran Siswa</h3>
-                    <button onclick="muatLogKasus()" class="btn-primary" style="background:#718096; width: auto; padding: 8px 15px; margin: 0; font-size: 13px;">
-                        🔄 Refresh Kasus
-                    </button>
-                </div>
-                <div style="overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px;">
-                    <table id="tabelLogKasus" style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
-                        <thead>
-                            <tr style="background: #edf2f7; color: #4a5568; border-bottom: 2px solid #cbd5e0;">
-                                <th style="padding: 12px;">NIS</th>
-                                <th style="padding: 12px;">Nama</th>
-                                <th style="padding: 12px;">Jenis Kasus/Pelanggaran</th>
-                                <th style="padding: 12px;">Tindakan / Solusi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logKasusBody">
-                            <tr>
-                                <td colspan="4" style="padding: 15px; text-align: center; color: #a0aec0;">Memuat data kasus...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <label for="adminStatus">Status Kehadiran:</label>
+            <select id="adminStatus">
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+            </select>
+            <button type="submit" class="btn-primary">Simpan Presensi</button>
+        </form>
 
-            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e2e8f0;">
-            <button onclick="downloadCSV('rekap_kasus', 'Rekap_Kasus_Siswa.csv')" class="btn-download" style="background:#718096;">📥 Download File Rekap Kasus (.csv)</button>
+        <div style="margin-top: 35px;">
+            <div class="top-row">
+                <h3>Log Presensi Hari Ini</h3>
+                <button onclick="muatLogPresensi()" class="btn-primary">🔄 Refresh Data</button>
+            </div>
+            <div class="table-scroll">
+                <table id="tabelLogPresensi">
+                    <thead>
+                        <tr>
+                            <th>NIS</th>
+                            <th>Nama</th>
+                            <th>Kelas</th>
+                            <th>Status</th>
+                            <th>Metode</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logPresensiBody">
+                        <tr><td colspan="5" style="padding:15px;text-align:center;color:#a0aec0;">Memuat data presensi terbaru...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="app.js"></script>
+    <!-- Tab: Rekap Download -->
+    <div id="tab-rekap" class="tab-content hidden">
+        <h2>Download Rekap Data Excel (CSV)</h2>
+        <p>Silakan unduh rekapan absensi langsung untuk ditarik ke Microsoft Excel.</p>
+        <div class="card-action">
+            <button onclick="downloadCSV('rekap_absen', 'Rekap_Absensi_Siswa.csv')" class="btn-download">📥 Download File Absensi (.csv)</button>
+        </div>
+    </div>
+
+    <!-- Tab: Kasus -->
+    <div id="tab-kasus" class="tab-content hidden">
+        <h2>Catatan Kasus / Pelanggaran Siswa</h2>
+        <p>Input riwayat pelanggaran atau ketidakhadiran bermasalah di sini.</p>
+
+        <form id="formKasus" class="admin-form">
+            <label for="kasusPilihSiswa">Pilih Siswa:</label>
+            <select id="kasusPilihSiswa">
+                <option value="">-- Pilih Siswa --</option>
+            </select>
+
+            <label for="jenisKasus">Jenis Pelanggaran / Kasus:</label>
+            <input type="text" id="jenisKasus" required placeholder="Contoh: Alpa 3 hari berturut-turut">
+
+            <label for="tindakan">Tindakan / Solusi:</label>
+            <input type="text" id="tindakan" required placeholder="Contoh: Panggilan Orang Tua">
+
+            <button type="submit" class="btn-danger">Simpan Log Kasus</button>
+        </form>
+
+        <div style="margin-top: 35px;">
+            <div class="top-row">
+                <h3>Daftar Pelanggaran Siswa</h3>
+                <button onclick="muatLogKasus()" class="btn-primary" style="background:#718096;">🔄 Refresh Kasus</button>
+            </div>
+            <div class="table-scroll">
+                <table id="tabelLogKasus">
+                    <thead>
+                        <tr>
+                            <th>NIS</th>
+                            <th>Nama</th>
+                            <th>Jenis Kasus/Pelanggaran</th>
+                            <th>Tindakan / Solusi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logKasusBody">
+                        <tr><td colspan="4" style="padding:15px;text-align:center;color:#a0aec0;">Memuat data kasus...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <hr style="margin:30px 0;border:0;border-top:1px solid #e2e8f0;">
+        <button onclick="downloadCSV('rekap_kasus', 'Rekap_Kasus_Siswa.csv')" class="btn-download" style="background:#718096;">📥 Download File Rekap Kasus (.csv)</button>
+    </div>
+
+</div><!-- /content -->
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+// Hamburger menu
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('sidebarOverlay');
+
+hamburger.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('visible');
+});
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('visible');
+});
+
+// Tambah data-label ke td untuk card view di HP
+function addDataLabels(tableId, labels) {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    rows.forEach(row => {
+        row.querySelectorAll('td').forEach((td, i) => {
+            if (labels[i]) td.setAttribute('data-label', labels[i]);
+        });
+    });
+}
+
+// Override switchTab agar tutup sidebar di mobile
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.remove('hidden');
+    if (btn) btn.classList.add('active');
+    // tutup sidebar di mobile
+    sidebar.classList.remove('open');
+    overlay.classList.remove('visible');
+}
+</script>
+<script src="app.js"></script>
 </body>
 </html>
